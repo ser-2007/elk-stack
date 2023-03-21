@@ -1,0 +1,48 @@
+filebeat.inputs:
+- type: log
+  enabled: true
+  paths:
+    - /var/log/*.log
+    - /var/log/messages
+    - /var/log/syslog
+  exclude_files:
+    - '*.gz'
+  fields:
+    type: system
+- type: log
+  enabled: true
+  paths:
+    - /var/log/nginx/*.log
+  exclude_files:
+    - '*.gz'
+  fields:
+    type: nginx
+- type: log
+  enabled: true
+  paths:
+    - /var/log/apache2/*.log
+  exclude_files:
+    - '*.gz'
+  fields:
+    type: apache
+- type: log
+  enabled: true
+  paths:
+    - /var/log/mysql/*.log
+  exclude_files:
+    - '*.gz'
+  fields:
+    type: mysql
+- type: log
+  enabled: true
+  paths:
+    - /var/log/redis/*.log
+  exclude_files:
+    - '*.gz'
+  fields:
+    type: redis
+output.elasticsearch:
+  hosts: ["{{ elasticsearch_host }}:{{ elasticsearch_port }}"]
+  index: "filebeat-%{+yyyy.MM.dd}"
+  username: "{{ elasticsearch_username }}"
+  password: "{{ elasticsearch_password }}"

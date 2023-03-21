@@ -1,0 +1,34 @@
+- name: install logstash GPG key
+  apt_key:
+    url: https://artifacts.elastic.co/GPG-KEY-elasticsearch
+    state: present
+
+- name: add logstash apt repository
+  apt_repository:
+    repo: deb https://artifacts.elastic.co/packages/{{ logstash_version }}/apt stable main
+    state: present
+    filename: logstash
+
+- name: install logstash
+  apt:
+    name: logstash
+    state: latest
+
+- name: configure logstash
+  template:
+    src: logstash.conf.j2
+    dest: /etc/logstash/conf.d/logstash.conf
+    mode: "0644"
+
+- name: enable and start logstash service
+  systemd:
+    name: logstash
+    state: started
+    enabled: yes
+
+- name: wait for logstash to start up
+  wait_for:
+    host: localhost
+    port: 9600
+    state: started
+    timeout: 60

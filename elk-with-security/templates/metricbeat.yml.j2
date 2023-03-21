@@ -1,0 +1,37 @@
+metricbeat.modules:
+- module: system
+  syslog:
+    enabled: true
+    var.paths: ["/var/log/syslog"]
+  auth:
+    enabled: true
+    var.paths: ["/var/log/auth.log"]
+- module: nginx
+  access:
+    enabled: true
+    var.paths: ["/var/log/nginx/access.log"]
+  error:
+    enabled: true
+    var.paths: ["/var/log/nginx/error.log"]
+- module: mysql
+  enabled: true
+  metricsets:
+    - "status"
+    - "performance"
+  period: 10s
+  hosts: ["localhost:3306"]
+  username: "{{ mysql_username }}"
+  password: "{{ mysql_password }}"
+- module: apache
+  access:
+    enabled: true
+    var.paths: ["/var/log/apache2/access.log"]
+  error:
+    enabled: true
+    var.paths: ["/var/log/apache2/error.log"]
+- module: redis
+  enabled: true
+  metricsets:
+    - "info"
+  period: 10s
+  hosts: ["localhost:6379"]

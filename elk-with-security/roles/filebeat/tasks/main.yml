@@ -1,0 +1,35 @@
+
+- name: install filebeat GPG key
+  apt_key:
+    url: https://artifacts.elastic.co/GPG-KEY-elasticsearch
+    state: present
+
+- name: add filebeat apt repository
+  apt_repository:
+    repo: deb https://artifacts.elastic.co/packages/{{ filebeat_version }}/apt stable main
+    state: present
+    filename: filebeat
+
+- name: install filebeat
+  apt:
+    name: filebeat
+    state: latest
+
+- name: configure filebeat
+  template:
+    src: filebeat.yml.j2
+    dest: /etc/filebeat/filebeat.yml
+    mode: "0644"
+
+- name: enable and start filebeat service
+  systemd:
+    name: filebeat
+    state: started
+    enabled: yes
+
+- name: wait for filebeat to start up
+  wait_for:
+    host: localhost
+    port: 5067
+    state: started
+    timeout: 60

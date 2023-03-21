@@ -1,0 +1,125 @@
+
+---
+- name: Install ELK Stack
+  hosts: elkservers
+  become: yes
+
+  vars:
+    elasticsearch_username: serkan
+    elasticsearch_password: mypassword
+    kibana_username: serkan
+    kibana_password: mypassword
+    beats_username: serkan
+    beats_password: mypassword
+
+  tasks:
+    - name: Install Java
+      apt:
+        name: openjdk-11-jdk
+        state: present
+
+    - name: Install Elasticsearch
+      apt_key:
+        url: https://artifacts.elastic.co/GPG-KEY-elasticsearch
+        state: present
+      apt_repository:
+        repo: deb https://artifacts.elastic.co/packages/oss-7.x/apt stable main
+        state: present
+      apt:
+        name: elasticsearch-oss
+        state: present
+
+    - name: Configure Elasticsearch
+      lineinfile:
+        path: /etc/elasticsearch/elasticsearch.yml
+        regexp: "{{ item.regexp }}"
+        line: "{{ item.line }}"
+        state: present
+      loop:
+        - { regexp: "^#cluster.name", line: "cluster.name: my-cluster" }
+        - { regexp: "^#node.name", line: "node.name: {{ ansible_hostname }}" }
+        - { regexp: "^#network.host", line: "network.host: 0.0.0.0" }
+        - { regexp: "^#discovery.seed_hosts", line: "discovery.seed_hosts: []" }
+        - { regexp: "^#cluster.initial_master_nodes", line: "cluster.initial_master_nodes: []" }
+        - { regexp: "^#xpack.security.enabled", line: "xpack.security.enabled: true" }
+        - { regexp: "^#xpack.security.transport.ssl.enabled", line: "xpack.security.transport.ssl.enabled: true" }
+        - { regexp: "^#xpack.security.transport.ssl.verification_mode", line: "xpack.security.transport.ssl.verification_mode: certificate" }
+        - { regexp: "^#xpack.security.transport.ssl.keystore.path", line: "xpack.security.transport.ssl.keystore.path: /etc/elasticsearch/elasticsearch.keystore" }
+        - { regexp: "^#xpack.security.transport.ssl.truststore.path", line: "xpack.security.transport.ssl.truststore.path: /etc/elasticsearch/elasticsearch.truststore" }
+
+    - name: Create Elasticsearch keystore
+      command: /usr/share/elasticsearch/bin/elasticsearch-keystore create
+      args:
+        creates: /etc/elasticsearch/elasticsearch.keystore
+      register: elasticsearch_keystore_created
+
+    - name: Add Elasticsearch passwords to keystore
+      command: /usr/share/elasticsearch/bin/elasticsearch-keystore add -x "bootstrap.password"
+      args:
+        stdin: "{{ elasticsearch_password }}"
+      when: elasticsearch_keystore_created is succeeded
+
+    - name: Start Elasticsearch
+      service:
+        name: elasticsearch
+        state: started
+        enabled: yes
+
+    - name: Install Kibana
+      apt:
+        name: kibana-oss
+        state: present
+
+    - name: Configure Kibana
+      lineinfile:
+        path: /etc/kibana/kibana.yml
+        regexp: "{{ item.regexp }}"
+        line: "{{ item.line }}"
+        state: present
+      loop:
+        - { regexp: "^#server.port", line: "server.port: 5601" }
+        - { regexp: "^#server.host", line: "server.host
+
+
+
+---
+- name: Set up roles and permissions in Kibana
+  hosts: remote-server
+  become: yes
+
+  vars:
+    elasticsearch_username: myuser
+    elasticsearch_password: mypassword
+    kibana_username: myuser
+    kibana_password: mypassword
+
+  tasks:
+    - name: Create Kibana index pattern
+      uri:
+        url: "http://localhost:5601/api/saved_objects/index-pattern/my-index-pattern"
+        method: POST
+        user: "{{ kibana_username }}"
+        password: "{{ kibana_password }}"
+        body: '{"attributes":{"title":"my-index-pattern","timeFieldName":"@timestamp"}}'
+        return_content: yes
+      register: kibana_index_pattern
+
+    - name: Create Kibana role
+      uri:
+        url: "http://localhost:5601/api/security/role/my-role"
+        method: POST
+        user: "{{ kibana_username }}"
+        password: "{{ kibana_password }}"
+        body: '{"elasticsearch":{"indices":[{"names":["my-index-pattern"],"privileges":["read"]}]}}'
+        return_content: yes
+      register: kibana_role
+
+    - name: Create Kibana user
+      uri:
+        url: "http://localhost:5601/api/security/user/my-user"
+        method: POST
+        user: "{{ kibana_username }}"
+        password: "{{ kibana_password }}"
+        body: '{"password":"mypassword","roles":["my-role"]}'
+        return_content: yes
+      register: kibana_user

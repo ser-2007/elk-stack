@@ -1,0 +1,12 @@
+put {
+  beats {
+    port => 5044
+  }
+}
+output {
+  elasticsearch {
+    hosts => ["{{ elasticsearch_host }}:{{ elasticsearch_port }}"]
+    index => "logstash-%{+YYYY.MM.dd}"
+  }
+}
+

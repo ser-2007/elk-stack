@@ -1,0 +1,4 @@
+
+kibana_version: "7.16.3"
+kibana_port: 5601
+elasticsearch_url: "http://localhost:{{ elasticsearch_port }}"

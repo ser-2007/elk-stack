@@ -1,0 +1,24 @@
+- name: Install and configure Elasticsearch
+  hosts: elasticsearch_servers
+  roles:
+    - elasticsearch
+
+- name: Install and configure Kibana
+  hosts: kibana_servers
+  roles:
+    - kibana
+    - xpack
+    - authentication
+
+- name: Install and configure Logstash
+  hosts: logstash_servers
+  roles:
+    - logstash
+    - xpack
+
+- name: Install and configure Metricbeat and Filebeat
+  hosts: monitoring_servers
+  roles:
+    - metricbeat
+    - filebeat
+    - xpack

@@ -1,0 +1,49 @@
+
+- name: install elasticsearch GPG key
+  apt_key:
+    url: https://artifacts.elastic.co/GPG-KEY-elasticsearch
+    state: present
+
+- name: add elasticsearch apt repository
+  apt_repository:
+    repo: deb https://artifacts.elastic.co/packages/{{ elasticsearch_version }}/apt stable main
+    state: present
+    filename: elasticsearch
+
+- name: install elasticsearch
+  apt:
+    name: elasticsearch
+    state: latest
+
+- name: configure elasticsearch
+  template:
+    src: elasticsearch.yml.j2
+    dest: /etc/elasticsearch/elasticsearch.yml
+    mode: "0644"
+
+- name: configure jvm.options
+  template:
+    src: jvm.options.j2
+    dest: /etc/elasticsearch/jvm.options
+    mode: "0644"
+
+- name: enable and start elasticsearch service
+  systemd:
+    name: elasticsearch
+    state: started
+    enabled: yes
+
+- name: wait for elasticsearch to start up
+  wait_for:
+    host: localhost
+    port: "{{ elasticsearch_port }}"
+    state: started
+    timeout: 60
+
+- name: install elasticsearch plugins
+  shell: bin/elasticsearch-plugin install "{{ item }}"
+  args:
+    chdir: "/usr/share/elasticsearch"
+  loop:
+    - ingest-geoip
+    - analysis-icu

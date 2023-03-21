@@ -1,0 +1,6 @@
+- name: install elasticsearch plugins
+  shell: bin/elasticsearch-plugin install "{{ item }}"
+  args:
+    chdir: "/usr/share/elasticsearch"
+  loop:
+    - ingest-geoip

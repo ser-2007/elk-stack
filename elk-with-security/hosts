@@ -1,0 +1,12 @@
+[elasticsearch_servers]
+elasticsearch1 ansible_host=192.168.1.1
+elasticsearch2 ansible_host=192.168.1.2
+
+[kibana_servers]
+kibana1 ansible_host=192.168.1.3
+
+[logstash_servers]
+logstash1 ansible_host=192.168.1.4
+
+[monitoring_servers]
+monitoring1 ansible_host=192.168.1.5
